@@ -31,6 +31,7 @@ min_rent_slider = 3.0  # スライダーの下限は3万円以下
 max_rent_slider = 25.0  # スライダーの上限は25万円以上
 
 # Streamlit設定
+st.set_page_config(layout="wide")
 st.title("家賃ヒートマップ")
 st.sidebar.header("フィルター")
 
@@ -138,8 +139,17 @@ if st.session_state["search_triggered"]:
                 popup=folium.Popup(popup_text, max_width=200),
             ).add_to(m)
 
-        # 地図を再描画
-        st_data = st_folium(m, width=700, height=500)
+        # 地図と表の表示
+        col1, col2 = st.columns([3, 1])
+
+        with col1:
+            st_data = st_folium(m, width=700, height=500)
+
+        with col2:
+            st.subheader("駅名と家賃一覧")
+            sort_order = st.radio("ソート順", ("昇順", "降順"), index=0)
+            sorted_data = filtered_data.sort_values("家賃", ascending=(sort_order == "昇順"))
+            st.dataframe(sorted_data[["駅", "家賃"]].reset_index(drop=True))
 
         # 地図の表示範囲と中心位置を更新（検索ボタンが押されている場合のみ）
         if st_data and search_button:
@@ -154,4 +164,11 @@ if st.session_state["search_triggered"]:
 
 # 検索がトリガーされていない場合は初期状態の地図を表示
 else:
-    st_folium(m, width=700, height=500)
+    col1, col2 = st.columns([3, 1])
+
+    with col1:
+        st_folium(m, width=700, height=500)
+
+    with col2:
+        st.subheader("駅名と家賃一覧")
+        st.text("条件を指定して検索してください。")
