@@ -5,7 +5,7 @@ import streamlit as st
 from matplotlib import cm, colors
 
 # 入力CSVファイルのパス
-data_path = "/Users/gokiyamamoto/Desktop/SUUMO_data/output/station_with_rent_coords.csv"
+data_path = "SUUMO_data/output/station_with_rent_coords.csv"
 
 # データを読み込む
 data = pd.read_csv(data_path)
