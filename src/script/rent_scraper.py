@@ -15,6 +15,7 @@ options.add_argument("--disable-gpu")
 driver = webdriver.Chrome(service=service, options=options)
 
 # 地域ごとの設定（新しいURL）
+#（1LDK、マンション、アパート、7分以内、10年以内、バス・トイレ別、2階以上、エアコン付き、オートロック）
 regions = {
     "tokyo": {
         "url": "https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&pc=50&smk=&po1=25&po2=99&shkr1=03&shkr2=03&shkr3=03&shkr4=03&ekInput=84570&ta=13&kskbn=01&tj=60&nk=-1&cb=0.0&ct=9999999&md=04&ts=1&ts=2&et=7&mb=0&mt=9999999&cn=10&tc=0400301&tc=0400101&tc=0400601&tc=0400801&fw2=&page=",
