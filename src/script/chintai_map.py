@@ -317,7 +317,8 @@ def update_slider_output(value):
         Output("most-expensive-station", "children"),
         Output("cheapest-station-card", "style"),
         Output("most-expensive-station-card", "style"),
-        Output("monthly-cost-slider-card", "style")
+        Output("monthly-cost-slider-card", "style"),
+        Output("monthly-cost-slider", "value")
     ],
     [
         Input("building-type-filter", "value"),
@@ -333,6 +334,10 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
     # デフォルトの地図状態
     center = map_state.get("mapbox.center", initial_view["center"])
     zoom = map_state.get("mapbox.zoom", initial_view["zoom"])
+
+
+    if selected_building_type == "所要時間マップ":
+        monthly_cost_range = [MIN_MONTHLY_COST, MAX_MONTHLY_COST]
 
     # データをフィルタリング
     filtered_data = filter_data(
@@ -404,7 +409,8 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
         most_expensive_station,
         cheapest_style,
         most_expensive_style,
-        monthly_cost_slider_style
+        monthly_cost_slider_style,
+        monthly_cost_range
     )
 
 
