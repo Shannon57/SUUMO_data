@@ -207,10 +207,11 @@ app.layout = dbc.Container(
                                 className="text-dark"
                             )
                         ),
-                        create_filter_card(
-                            "家賃スライダー",
-                            html.Div(
+                        dbc.Card(
+                            dbc.CardBody(
                                 [
+                                    html.H6("家賃スライダー", className="card-title text-light"),
+                                    html.P(id="monthly-cost-slider-title", className="card-text text-light"),
                                     dcc.RangeSlider(
                                         id="monthly-cost-slider",
                                         min=MIN_MONTHLY_COST,
@@ -226,7 +227,21 @@ app.layout = dbc.Container(
                                         style={"text-align": "center"}  # 中央揃え
                                     )
                                 ]
-                            )
+                            ),
+                            id="monthly-cost-slider-card",  # カードのIDを追加
+                            style={"display": "none"},  # デフォルトは表示
+                            className="mb-4 bg-secondary shadow-sm"
+                        ),
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.H6("最も安い駅", className="card-title text-light"),
+                                    html.P(id="cheapest-station", className="card-text text-light"),
+                                ]
+                            ),
+                            id="cheapest-station-card",  # カードのIDを追加
+                            style={"display": "none"},  # デフォルトは表示
+                            className="mb-4 bg-secondary shadow-sm"
                         ),
                         # 最安の駅カード
                         dbc.Card(
@@ -237,7 +252,7 @@ app.layout = dbc.Container(
                                 ]
                             ),
                             id="cheapest-station-card",  # カードのIDを追加
-                            style={"display": "block"},  # デフォルトは表示
+                            style={"display": "none"},  # デフォルトは表示
                             className="mb-4 bg-secondary shadow-sm"
                         ),
                         # 最も高い駅カード
@@ -301,7 +316,8 @@ def update_slider_output(value):
         Output("cheapest-station", "children"),
         Output("most-expensive-station", "children"),
         Output("cheapest-station-card", "style"),
-        Output("most-expensive-station-card", "style")
+        Output("most-expensive-station-card", "style"),
+        Output("monthly-cost-slider-card", "style")
     ],
     [
         Input("building-type-filter", "value"),
@@ -348,7 +364,7 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
 
     # 色分けを決定
     color_by = "所要時間範囲" if selected_building_type == "所要時間マップ" else "月額"
-
+    monthly_cost_slider_style = {"display": "none"}
     # 最安・最も高い駅の計算
     # 最安・最も高い駅の計算
     if selected_building_type != "所要時間マップ" and "月額" in filtered_data.columns:
@@ -358,6 +374,7 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
             most_expensive_station = "該当なし"
             cheapest_style = {"display": "none"}
             most_expensive_style = {"display": "none"}
+            monthly_cost_slider_style = {"display": "none"}
         else:
             # データが存在する場合
             cheapest = filtered_data.loc[filtered_data["月額"].idxmin()]
@@ -366,12 +383,14 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
             most_expensive_station = f"{most_expensive['駅名']}（月額: {most_expensive['月額']}万円）"
             cheapest_style = {"display": "block"}
             most_expensive_style = {"display": "block"}
+            monthly_cost_slider_style = {"display": "block"}
     else:
         # 条件が「所要時間マップ」の場合やデータに「月額」列がない場合
         cheapest_station = "該当なし"
         most_expensive_station = "該当なし"
         cheapest_style = {"display": "none"}
         most_expensive_style = {"display": "none"}
+        monthly_cost_slider_style = {"display": "none"}
 
 
     # 地図の生成
@@ -384,7 +403,8 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
         cheapest_station,
         most_expensive_station,
         cheapest_style,
-        most_expensive_style
+        most_expensive_style,
+        monthly_cost_slider_style
     )
 
 
