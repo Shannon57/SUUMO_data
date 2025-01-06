@@ -232,7 +232,7 @@ app.layout = dbc.Container(
                         dbc.Card(
                             dbc.CardBody(
                                 [
-                                    html.H6("最安の駅", className="card-title text-light"),
+                                    html.H6("最も安い駅", className="card-title text-light"),
                                     html.P(id="cheapest-station", className="card-text text-light"),
                                 ]
                             ),
@@ -327,7 +327,7 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
     )
 
     # 条件に一致するデータがない場合の処理
-    if filtered_data.empty:
+    if filtered_data is None:
         empty_figure = px.scatter_mapbox()
         empty_figure.update_layout(
             paper_bgcolor="black",
@@ -340,8 +340,8 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
             empty_figure,
             {"center": center, "zoom": zoom},
             html.Div("条件に一致するデータがありません。", className="text-light text-center mt-3"),
-            "",
-            "",
+            "該当なし",
+            "該当なし",
             {"display": "none"},
             {"display": "none"}
         )
@@ -350,18 +350,29 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
     color_by = "所要時間範囲" if selected_building_type == "所要時間マップ" else "月額"
 
     # 最安・最も高い駅の計算
-    try:
-        cheapest = filtered_data.loc[filtered_data["月額"].idxmin()]
-        cheapest_station = f"{cheapest['駅名']}（月額: {cheapest['月額']}万円）"
-        most_expensive = filtered_data.loc[filtered_data["月額"].idxmax()]
-        most_expensive_station = f"{most_expensive['駅名']}（月額: {most_expensive['月額']}万円）"
-        cheapest_style = {"display": "block"}
-        most_expensive_style = {"display": "block"}
-    except ValueError:  # 万が一エラーが発生した場合
-        cheapest_station = ""
-        most_expensive_station = ""
+    # 最安・最も高い駅の計算
+    if selected_building_type != "所要時間マップ" and "月額" in filtered_data.columns:
+        if filtered_data is None or filtered_data.empty:
+            # データが空の場合
+            cheapest_station = "該当なし"
+            most_expensive_station = "該当なし"
+            cheapest_style = {"display": "none"}
+            most_expensive_style = {"display": "none"}
+        else:
+            # データが存在する場合
+            cheapest = filtered_data.loc[filtered_data["月額"].idxmin()]
+            cheapest_station = f"{cheapest['駅名']}（月額: {cheapest['月額']}万円）"
+            most_expensive = filtered_data.loc[filtered_data["月額"].idxmax()]
+            most_expensive_station = f"{most_expensive['駅名']}（月額: {most_expensive['月額']}万円）"
+            cheapest_style = {"display": "block"}
+            most_expensive_style = {"display": "block"}
+    else:
+        # 条件が「所要時間マップ」の場合やデータに「月額」列がない場合
+        cheapest_station = "該当なし"
+        most_expensive_station = "該当なし"
         cheapest_style = {"display": "none"}
         most_expensive_style = {"display": "none"}
+
 
     # 地図の生成
     fig = create_map_figure(filtered_data, {"center": center, "zoom": zoom}, color_by)
@@ -375,7 +386,6 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
         cheapest_style,
         most_expensive_style
     )
-
 
 
 # アプリケーション実行
