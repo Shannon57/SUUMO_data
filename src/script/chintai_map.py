@@ -50,7 +50,7 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 
 # 初期の地図範囲とズームレベルを設定
 initial_view = {
-    "center": {"lat": 35.68, "lon": 139.76},  # 東京駅付近
+    "center": {"lat": 35.635, "lon": 139.741},  # 高輪ゲートウェイ駅付近
     "zoom": 10
 }
 
@@ -90,7 +90,7 @@ def filter_data(selected_building_type, selected_time_ranges, selected_transfer_
     filtered_data = data
 
     # 建物種別フィルタを適用
-    if selected_building_type and isinstance(selected_building_type, str):
+    if selected_building_type != "所要時間マップ" and isinstance(selected_building_type, str):
         filtered_data = filtered_data[filtered_data["建物種別"] == selected_building_type]
     
     # 所要時間範囲と乗り換え回数でフィルタリング
@@ -162,17 +162,16 @@ app.layout = dbc.Container(
                 dbc.Col(
                     [
                         create_filter_card(
-                            "建物種別",
-                            dcc.RadioItems(
+                            "マップタイプ",
+                            dcc.Dropdown(
                                 id="building-type-filter",
                                 options=[
-                                    {"label": "無選択", "value": ""},
-                                    {"label": "賃貸アパート", "value": "賃貸アパート"},
-                                    {"label": "賃貸マンション", "value": "賃貸マンション"}
+                                    {"label": "所要時間マップ", "value": "所要時間マップ"},
+                                    {"label": "賃貸アパートマップ", "value": "賃貸アパート"},
+                                    {"label": "賃貸マンションマップ", "value": "賃貸マンション"}
                                 ],
-                                value="",  # デフォルトは無選択（空文字列）
-                                inline=True,
-                                className="text-light"
+                                value="所要時間マップ",
+                                className="text-dark"
                             )
                         ),
                         create_filter_card(
@@ -201,8 +200,11 @@ app.layout = dbc.Container(
                                     html.P(id="cheapest-station", className="card-text text-light"),
                                 ]
                             ),
+                            id="cheapest-station-card",  # カードのIDを追加
+                            style={"display": "block"},  # デフォルトは表示
                             className="mb-4 bg-secondary shadow-sm"
                         ),
+
                         # 最も高い駅カード
                         dbc.Card(
                             dbc.CardBody(
@@ -211,6 +213,8 @@ app.layout = dbc.Container(
                                     html.P(id="most-expensive-station", className="card-text text-light"),
                                 ]
                             ),
+                            id="most-expensive-station-card",  # カードのIDを追加
+                            style={"display": "block"},  # デフォルトは表示
                             className="mb-4 bg-secondary shadow-sm"
                         ),
                         html.Div(id="route-table", className="mt-3"),  # フィルタ結果の表表示
@@ -242,7 +246,9 @@ app.layout = dbc.Container(
         Output("map-state", "data"),
         Output("route-table", "children"),
         Output("cheapest-station", "children"),
-        Output("most-expensive-station", "children")
+        Output("most-expensive-station", "children"),
+        Output("cheapest-station-card", "style"),  # 最安の駅カードのスタイル
+        Output("most-expensive-station-card", "style")  # 最も高い駅カードのスタイル
     ],
     [
         Input("building-type-filter", "value"),
@@ -264,7 +270,9 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
     filtered_data = filter_data(selected_building_type, selected_time_ranges, selected_transfer_counts)
 
     # 色分けを決定
-    color_by = "所要時間範囲" if not selected_building_type else "月額"
+    color_by = "所要時間範囲"
+    if selected_building_type != "所要時間マップ":
+        color_by = "月額"
 
     # ユニークな路線名を取得して表形式で表示
     unique_routes = filtered_data["路線名"].unique()
@@ -282,7 +290,7 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
     )
 
     # 最安・最も高い駅の計算
-    if not filtered_data.empty:
+    if not filtered_data.empty and selected_building_type != "所要時間マップ":
         # 最安の駅
         cheapest = filtered_data.loc[filtered_data["月額"].idxmin()]
         cheapest_station = f"{cheapest['駅名']}（月額: {cheapest['月額']}万円）"
@@ -290,9 +298,15 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
         # 最も高い駅
         most_expensive = filtered_data.loc[filtered_data["月額"].idxmax()]
         most_expensive_station = f"{most_expensive['駅名']}（月額: {most_expensive['月額']}万円）"
+
+        # カードを表示
+        cheapest_style = {"display": "block"}
+        most_expensive_style = {"display": "block"}
     else:
-        cheapest_station = "データなし"
-        most_expensive_station = "データなし"
+        cheapest_station = ""
+        most_expensive_station = ""
+        cheapest_style = {"display": "none"}
+        most_expensive_style = {"display": "none"}
 
     # 地図の生成
     if not filtered_data.empty:
@@ -307,7 +321,16 @@ def update_map(selected_building_type, selected_time_ranges, selected_transfer_c
             )
         )
 
-    return fig, map_state, table_children, cheapest_station, most_expensive_station
+    return (
+        fig,
+        map_state,
+        table_children,
+        cheapest_station,
+        most_expensive_station,
+        cheapest_style,
+        most_expensive_style,
+    )
+
 
 # アプリケーション実行
 if __name__ == "__main__":
